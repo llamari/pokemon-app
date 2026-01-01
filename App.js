@@ -1,17 +1,24 @@
-import React, { useState } from 'react';
-import { Button, Image, ScrollView, StyleSheet, Text, View } from 'react-native';
-
-const pokemonsIniciais = [
-  { id: 1, nome: 'Bulbassauro' },
-  { id: 4, nome: 'Charmander' },
-  { id: 7, nome: 'Squirtle' },
-  { id: 25, nome: 'Pikachu' },
-]
+import React, { useEffect, useState } from 'react';
+import { Button, Image, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 
 export default function App() {
+  const [pokemons, setPokemons] = useState([]);
   const [pokemonEscolhido, setPokemonEscolhido] = useState(null);
-  const getPokemonData = (idPokemon) => {
-    const endpoint = `https://pokeapi.co/api/v2/pokemon/${idPokemon}/`;
+
+  const getInitialPokemons = () => {
+    const endpoint = 'https://pokeapi.co/api/v2/pokemon';
+    fetch(endpoint)
+      .then(resposta => resposta.json())
+      .then(json => {
+        setPokemons(json.results);
+      })
+      .catch(() => {
+        Alert.alert('Erro', 'Não foi possível carregar a lista de Pokémons.');
+      });
+  }
+
+  const getPokemonData = (urlPokemon) => {
+    const endpoint = `${urlPokemon}`;
     fetch(endpoint)
       .then(resposta => resposta.json())
       .then(json => {
@@ -19,6 +26,7 @@ export default function App() {
           nome: json.name,
           img: json.sprites.other["official-artwork"].front_default,
           peso: json.weight,
+          altura: json.height,
         };
 
         setPokemonEscolhido(pokemon);
@@ -29,26 +37,37 @@ export default function App() {
       });
   };
 
+  useEffect(() => {
+    getInitialPokemons();
+  }, []);
+
   return (
     <View style={styles.container}>
       <ScrollView>
         <View style={styles.topo}>
-          <Text style={styles.topoTitulo}>ESCOLHA SEU POKEMON</Text>
+          <Image
+            resizeMode='contain'
+            style={{ height: 50, alignSelf: 'center' }}
+            source={require('./assets/pokemon-icon.png')}
+          />
         </View>
 
         {pokemonEscolhido != null && (
           <View style={styles.pokemonBox}>
             <Text style={styles.pokemonNome}>Nome: {pokemonEscolhido.nome}</Text>
             <Text style={styles.pokemonPeso}>Peso: {pokemonEscolhido.peso}</Text>
+            <Text style={styles.pokemonPeso}>Altura: {pokemonEscolhido.altura}</Text>
 
             <Image resizeMode='stretch' style={styles.pokemonImg} source={{ uri: pokemonEscolhido.img }} />
           </View>
         )}
 
-        {pokemonsIniciais.map(pokemon => (
-          <View style={styles.cardContainer} key={pokemon.id}>
-            <Text style={styles.cardTitle}>{pokemon.nome}</Text>
-            <Button title="Dados do pokemon" onPress={() => getPokemonData(pokemon.id)} />
+        {pokemons?.map(pokemon => (
+          <View style={styles.cardContainer} key={pokemon.url}>
+            <Text style={styles.cardTitle}>{pokemon.name}</Text>
+            <TouchableOpacity onPress={() => getPokemonData(pokemon.url)}>
+              <Text style={styles.cardButton}>Dados do pokemon</Text>
+            </TouchableOpacity>
           </View>
         ))}
 
@@ -60,14 +79,15 @@ export default function App() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#fff',
+    backgroundColor: '#fcf8d4ff',
   },
   topo: {
-    height: 10,
-    backgroundColor: '#e73e33',
-    padding: 20,
-    paddingTop: 40,
+    height: 100,
+    backgroundColor: '#F78F3F',
+    padding: 10,
+    paddingTop: 30,
     marginBottom: 20,
+    overflow: 'hidden',
   },
   topoTitulo: {
     fontSize: 22,
@@ -77,6 +97,7 @@ const styles = StyleSheet.create({
   },
   cardContainer: {
     borderWidth: 1,
+    backgroundColor: '#ffb67eff',
     borderColor: '#d5d5d5',
     borderRadius: 4,
     padding: 10,
@@ -85,11 +106,27 @@ const styles = StyleSheet.create({
   },
   cardTitle: {
     fontSize: 22,
-    color: '#656565',
+    color: '#2F6AB3',
+    fontWeight: 'bold',
+    fontSize: 25,
+    textTransform: 'capitalize',
     marginBottom: 20,
     textAlign: 'center',
   },
+  cardButton: {
+    fontSize: 18,
+    color: '#fff',
+    backgroundColor: '#2F6AB3',
+    padding: 8,
+    textAlign: 'center',
+    borderRadius: 10,
+  },
   pokemonBox: {
+    backgroundColor: "#fdde64ff",
+    borderRadius: 10,
+    padding: 15,
+    marginBottom: 20,
+    marginHorizontal: 20,
     alignItems: 'center',
   },
   pokemonNome: {
